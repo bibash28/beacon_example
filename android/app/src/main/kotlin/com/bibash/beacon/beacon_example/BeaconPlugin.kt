@@ -1,6 +1,7 @@
 package com.bibash.beacon.beacon_example
 
 import android.util.Log
+import com.google.gson.Gson
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -29,7 +30,6 @@ import it.airgap.beaconsdk.core.data.BeaconError
 import it.airgap.beaconsdk.core.message.BeaconMessage
 import it.airgap.beaconsdk.core.message.BeaconRequest
 import it.airgap.beaconsdk.core.message.ErrorBeaconResponse
-import it.airgap.beaconsdk.core.message.PermissionBeaconRequest
 import it.airgap.beaconsdk.transport.p2p.matrix.p2pMatrix
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,12 +51,10 @@ class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler
         eventChannel.setStreamHandler(this)
     }
 
-    //TODO(bibash): handling
-
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             "startBeacon" -> {
-                startBeacon()
+                startBeacon(result)
             }
             "respondExample" ->
                 respondExample(result)
@@ -94,7 +92,7 @@ class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler
 
     private var publisher = MutableSharedFlow<String>()
 
-    private fun startBeacon() {
+    private fun startBeacon(result: Result) {
         CoroutineScope(Dispatchers.IO).launch {
             beaconClient?.stop()
             beaconClient = BeaconWalletClient("Altme") {
@@ -104,12 +102,17 @@ class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler
                 ignoreUnsupportedBlockchains = true
             }
 
+
+            val peers = beaconClient?.getPeers()
+            val hasPeer = peers?.isNotEmpty() ?: false
+            result.success(mapOf("success" to hasPeer))
+
             launch {
                 beaconClient?.connect()
                     ?.onEach { result -> result.getOrNull()?.let { saveAwaitingRequest(it) } }
                     ?.collect { result ->
                         result.getOrNull()?.let {
-                            publisher.emit(it.toString())
+                            publisher.emit(Gson().toJson(it))
                         }
                     }
             }
@@ -156,7 +159,7 @@ class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler
             }
             beaconClient.respond(response)
             removeAwaitingRequest()
-            result.success(mapOf("error" to 0))
+            result.success(mapOf("success" to true))
         }
     }
 
@@ -164,8 +167,8 @@ class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler
         CoroutineScope(Dispatchers.IO).launch {
             beaconClient?.pair(pairingRequest)
             val peers = beaconClient?.getPeers()
-            val isError = if (peers?.isNotEmpty() == true) 0 else 1
-            result.success(mapOf("error" to isError))
+            val hasPeer = peers?.isNotEmpty() ?: false
+            result.success(mapOf("success" to hasPeer))
         }
     }
 
@@ -173,8 +176,8 @@ class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler
         CoroutineScope(Dispatchers.IO).launch {
             beaconClient?.removeAllPeers()
             val peers = beaconClient?.getPeers()
-            val isError = if (peers?.isNotEmpty() == true) 1 else 0
-            result.success(mapOf("error" to isError))
+            val hasPeer = peers?.isNotEmpty() ?: false
+            result.success(mapOf("success" to !hasPeer))
         }
     }
 

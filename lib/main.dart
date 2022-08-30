@@ -37,16 +37,37 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final TextEditingController pairingRequestController = TextEditingController(
       text:
-          "GUsRsanpcKw3qz67A8adX1VNhMfWumXTrSXwN3dkQmJywa6M1Wt5mF2n5omouMQTNCF4mRHo83gU4R6ZBijpXvyVkU1PnGBEJAiirmZH8mSCuWywngqiDJDDyQmfGNc2uj85uBffndZ4Agys5LHLK6d5jMH4yooAWmnKc6qWHT8eeEd3SrZbKqVoCE7UG7gpYtLvkHG2mFsnUGJbBTP3dQ4WRTiyYwgZAHwTRgXTFqtR6XYuQZnYHfCiqynNeBSXR5NBtAc4bWEXWf165ygCHqp4nYHaaHTv1NuEpXdu29tKxtsNSi53XtiVdGa2YcgXLoPZ5tXEudVi");
+          "GUsRsanpcLZGE9oNTJyV6WKhvE9itMUi9uStuXnXWPMhKsPynPLX79xqNNqwXiipaiJUsJwY9xE5zzZzycWA2XZfE6STW6LMpr72HCrJvFJZ6DPNxhhpd4WXtdNDLbF6tDsXfBcYn66wpkQ6fN1rHSXqfpPGSD8CfE4fuGxEAB3kw8GazUjwX2Eg6taGrFJqqEmragutBGoZ3Qgw7FahbuUGPMNDDS86iGWXvFkUDxKgKkP8KahwBaUBUd61gjUMMWP2p5PCZpudWm8dEz2MnTPszMcrzbZu7ZmBRic5J5TJCkmjvpEb2YJC1JMs39nrk5RbpuhRvZdr");
+
+  bool hasPeers = false;
+
+  String value = '';
 
   @override
   void initState() {
     super.initState();
-    _methodChannel.invokeMethod('startBeacon');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      startBeacon();
+    });
   }
 
-  static Stream<String> get getBeaconResponse {
-    return _eventChannel.receiveBroadcastStream().cast();
+  startBeacon() async {
+    final Map response = await _methodChannel.invokeMethod('startBeacon');
+    setState(() {
+      hasPeers = json.decode(response['success'].toString());
+    });
+    getBeaconResponse();
+  }
+
+  void getBeaconResponse() {
+    _eventChannel.receiveBroadcastStream().listen(
+      (data) {
+        setState(() {
+          value = data;
+        });
+      },
+    );
   }
 
   @override
@@ -72,43 +93,65 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
+                    onPressed: !hasPeers
+                        ? null
+                        : () async {
+                            final Map response = await _methodChannel
+                                .invokeMethod('removePeers');
+
+                            setState(() {
+                              hasPeers =
+                                  json.decode(response['success'].toString());
+                            });
+
+                            if (!hasPeers) {
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text('Successfully disconnected.'),
+                              ));
+                            }
+                          },
                     child: const Text('Unpair'),
-                    onPressed: () async {
-                      final Map response =
-                          await _methodChannel.invokeMethod('removePeers');
-                      if (json.decode(response['error'].toString()) == 0) {
-                        // ignore: use_build_context_synchronously
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
-                          content: Text('Successfully disconnected.'),
-                        ));
-                      }
-                    },
                   ),
                   ElevatedButton(
+                    onPressed: hasPeers
+                        ? null
+                        : () async {
+                            final Map response = await _methodChannel
+                                .invokeMethod('pair', {
+                              "pairingRequest": pairingRequestController.text
+                            });
+
+                            setState(() {
+                              hasPeers =
+                                  json.decode(response['success'].toString());
+                            });
+
+                            if (hasPeers) {
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text('Successfully paired.'),
+                              ));
+                            }
+                          },
                     child: const Text('Pair'),
-                    onPressed: () async {
-                      final Map response = await _methodChannel.invokeMethod(
-                          'pair',
-                          {"pairingRequest": pairingRequestController.text});
-                      if (json.decode(response['error'].toString()) == 0) {
-                        // ignore: use_build_context_synchronously
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
-                          content: Text('Successfully paired.'),
-                        ));
-                      }
-                    },
                   ),
                 ],
               ),
               Container(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
+                  onPressed: value.isEmpty
+                      ? null
+                      : () async {
+                          setState(() {
+                            value = '';
+                          });
+                          await _methodChannel.invokeMethod('respondExample');
+                        },
                   child: const Text('Respond'),
-                  onPressed: () async {
-                    await _methodChannel.invokeMethod('respondExample');
-                  },
                 ),
               ),
               const Divider(),
@@ -119,15 +162,11 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               SizedBox(
                 width: double.infinity,
-                child: StreamBuilder<String>(
-                    stream: getBeaconResponse,
-                    builder: (context, snapshot) {
-                      return Text(
-                        snapshot.hasData ? snapshot.data! : '',
-                        textAlign: TextAlign.left,
-                      );
-                    }),
-              )
+                child: Text(
+                  value,
+                  textAlign: TextAlign.left,
+                ),
+              ),
             ],
           ),
         ),
