@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -34,9 +36,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final TextEditingController pairingRequestController = TextEditingController(
       text:
-          "GUsRsanpcKwCC7ibxHu25uw4RtU2kPB8brXvz93HfsZjUxgxnQaAS6zatPCGftcicMkNDe1buV9nGaFaEFmUQYCNstPCwZ3MHiJR7C4PwVmv7Ct46qawk9c7pxL2yD5UsbT9TTecuprjP4mL8iZzFq9otPbHHgS98aukcsAmcbkJ8ieU3jxYuGq7eFwFMaWLG2CzNs5ZxqGH8rjC6K9krqBSCdE67hxhjWcj398hPW4qiEd4L6p6ujXyfk54Tp2jAPcE7vmRAeZnwoEbUqxhdB2oFbdB5ijYNgDKPKy9BU6iADZ1gMH3DVfSzhgZsrR6hnj3dK3iodwo");
+          "GUsRsanpcKz42MYDnuo63Lw8HD8bXoFZphzoY7iqZGqYuHwxQGBf7YbqmBg8dDgakbnjRsGnNgb6dM94Ax7uxm4o7f9YiQ8gYRH4N8EEQZCLowjbJTCk81fwvftZtk9nZPS6RvqSVZY1rdFNVkHmeLq6gnozkjhDdVrzEkTs6PFr4ZGQR4rryHHnm2RwbuCbERPARnPwqdAfxQaTHs4ivFHnBLPE8hejC4yVNDYCSM3z98wSjxznQzrT1WGt5Pr2WmJ6mzVLM2agF8GADEiPHjhnmSnGwo4whzAFtE8ZFoGwk1HwqUswWxQnE3Q6WVAndiusD1d7uSQe");
 
-  String value = "Response: ";
+  String value = "Beacon Response: ";
 
   @override
   void initState() {
@@ -64,9 +66,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () async {
                   final Map response = await _methodChannel.invokeMethod('pair',
                       {"pairingRequest": pairingRequestController.text});
-                  setState(() {
-                    value = response.toString();
-                  });
+                  if (json.decode(response['error'].toString()) == 0) {
+                    // ignore: use_build_context_synchronously
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Successfully Paired'),
+                    ));
+                  }
                 },
               ),
               ElevatedButton(

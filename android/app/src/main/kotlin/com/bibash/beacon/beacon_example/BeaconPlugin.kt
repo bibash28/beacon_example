@@ -98,7 +98,7 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
         }
     }
 
-    fun respondExample(call: MethodCall, result: Result) {
+    private fun respondExample(call: MethodCall, result: Result) {
         val request = awaitingRequest ?: return
         val beaconClient = beaconClient ?: return
 
@@ -138,16 +138,14 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
         }
     }
 
-    fun pair(pairingRequest: String, result: Result) {
+    private fun pair(pairingRequest: String, result: Result) {
         CoroutineScope(Dispatchers.IO).launch {
             beaconClient?.pair(pairingRequest)
             val peers = beaconClient?.getPeers()
-            val peersList = if (peers?.isNotEmpty() == true) peers else emptyList()
             val isError = if (peers?.isNotEmpty() == true) 0 else 1
-            result.success(mapOf("error" to isError, "result" to peersList.toString()))
+            result.success(mapOf("error" to isError))
         }
     }
-
 
     private fun saveAwaitingRequest(message: BeaconMessage) {
         awaitingRequest = if (message is BeaconRequest) message else null
