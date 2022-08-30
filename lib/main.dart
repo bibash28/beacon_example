@@ -33,17 +33,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   static const MethodChannel _methodChannel = MethodChannel('beaconMethod');
+  static const EventChannel _eventChannel = EventChannel('beaconEvent');
 
   final TextEditingController pairingRequestController = TextEditingController(
       text:
-          "GUsRsanpcL2Se3yYrWmrimk36PYiJLmk4rz8GR9oxSqTyMstRbRtvsYt1XiumG5EC51ov7mKLNJqcXaiT4UWyHmagy3iQhT4UV4e6QPrUVRk8ZyAHs6C7nwpyLAZB2hoQLB5JrtTwQFV3cpqp4b3StqRLitmMDQrKoBmL7CTGKRrWTn7Ew9FZmYA4wdTVDirQ4EqNuQSTPag1TTeStReke9dTSM42mzGdqZJTRCrfEHSnjhH3fK7Z4Brt52DFbEFNB95hGSMjY37n5aqqtzTzbqZcJCKMw8rDVVtbb8CArXk9bWMJWFE6F5smGVU9g8cgRMwmv4NDGvF");
-
-  String value = "";
+          "GUsRsanpcKw3qz67A8adX1VNhMfWumXTrSXwN3dkQmJywa6M1Wt5mF2n5omouMQTNCF4mRHo83gU4R6ZBijpXvyVkU1PnGBEJAiirmZH8mSCuWywngqiDJDDyQmfGNc2uj85uBffndZ4Agys5LHLK6d5jMH4yooAWmnKc6qWHT8eeEd3SrZbKqVoCE7UG7gpYtLvkHG2mFsnUGJbBTP3dQ4WRTiyYwgZAHwTRgXTFqtR6XYuQZnYHfCiqynNeBSXR5NBtAc4bWEXWf165ygCHqp4nYHaaHTv1NuEpXdu29tKxtsNSi53XtiVdGa2YcgXLoPZ5tXEudVi");
 
   @override
   void initState() {
     super.initState();
     _methodChannel.invokeMethod('startBeacon');
+  }
+
+  static Stream<String> get getBeaconResponse {
+    return _eventChannel.receiveBroadcastStream().cast();
   }
 
   @override
@@ -116,10 +119,14 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               SizedBox(
                 width: double.infinity,
-                child: Text(
-                  value,
-                  textAlign: TextAlign.left,
-                ),
+                child: StreamBuilder<String>(
+                    stream: getBeaconResponse,
+                    builder: (context, snapshot) {
+                      return Text(
+                        snapshot.hasData ? snapshot.data! : '',
+                        textAlign: TextAlign.left,
+                      );
+                    }),
               )
             ],
           ),

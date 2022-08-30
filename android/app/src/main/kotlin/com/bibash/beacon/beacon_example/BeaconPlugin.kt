@@ -3,6 +3,7 @@ package com.bibash.beacon.beacon_example
 import android.util.Log
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.Result
@@ -32,19 +33,25 @@ import it.airgap.beaconsdk.core.message.PermissionBeaconRequest
 import it.airgap.beaconsdk.transport.p2p.matrix.p2pMatrix
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class BeaconPlugin : MethodChannel.MethodCallHandler {
-    val tag = "BeaconPlugin"
+class BeaconPlugin : MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
+    private val tag = "BeaconPlugin"
 
     private lateinit var methodChannel: MethodChannel
+    private lateinit var eventChannel: EventChannel
 
     fun createChannels(@NonNull flutterEngine: FlutterEngine) {
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "beaconMethod")
         methodChannel.setMethodCallHandler(this)
-
+        eventChannel = EventChannel(flutterEngine.dartExecutor.binaryMessenger, "beaconEvent")
+        eventChannel.setStreamHandler(this)
     }
+
+    //TODO(bibash): handling
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
@@ -52,7 +59,7 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
                 startBeacon()
             }
             "respondExample" ->
-                respondExample(call, result)
+                respondExample(result)
             "pair" -> {
                 val pairingRequest: String = call.argument("pairingRequest") ?: ""
                 pair(pairingRequest, result)
@@ -67,9 +74,25 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
     }
 
 
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        CoroutineScope(Dispatchers.IO).launch {
+            publisher
+                .collect {
+                    withContext(Dispatchers.Main) {
+                        events?.success(it)
+                    }
+                }
+        }
+    }
+
+    override fun onCancel(arguments: Any?) {}
+
+
     private var beaconClient: BeaconWalletClient? = null
     private var awaitingRequest: BeaconRequest? = null
 
+
+    private var publisher = MutableSharedFlow<String>()
 
     private fun startBeacon() {
         CoroutineScope(Dispatchers.IO).launch {
@@ -86,22 +109,14 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
                     ?.onEach { result -> result.getOrNull()?.let { saveAwaitingRequest(it) } }
                     ?.collect { result ->
                         result.getOrNull()?.let {
-                            when (it) {
-                                is PermissionBeaconRequest -> {
-
-
-                                }
-                                else -> {
-
-                                }
-                            }
+                            publisher.emit(it.toString())
                         }
                     }
             }
         }
     }
 
-    private fun respondExample(call: MethodCall, result: Result) {
+    private fun respondExample(result: Result) {
         val request = awaitingRequest ?: return
         val beaconClient = beaconClient ?: return
 
