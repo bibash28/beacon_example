@@ -38,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
       text:
           "GUsRsanpcL2Se3yYrWmrimk36PYiJLmk4rz8GR9oxSqTyMstRbRtvsYt1XiumG5EC51ov7mKLNJqcXaiT4UWyHmagy3iQhT4UV4e6QPrUVRk8ZyAHs6C7nwpyLAZB2hoQLB5JrtTwQFV3cpqp4b3StqRLitmMDQrKoBmL7CTGKRrWTn7Ew9FZmYA4wdTVDirQ4EqNuQSTPag1TTeStReke9dTSM42mzGdqZJTRCrfEHSnjhH3fK7Z4Brt52DFbEFNB95hGSMjY37n5aqqtzTzbqZcJCKMw8rDVVtbb8CArXk9bWMJWFE6F5smGVU9g8cgRMwmv4NDGvF");
 
-  String value = "Beacon Response: ";
+  String value = "";
 
   @override
   void initState() {
@@ -57,6 +57,10 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: <Widget>[
+              Container(
+                alignment: Alignment.centerLeft,
+                child: const Text('Pairing Request: '),
+              ),
               TextField(
                 controller: pairingRequestController,
                 maxLines: 10,
@@ -106,6 +110,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const Divider(),
               const SizedBox(height: 10),
+              Container(
+                alignment: Alignment.centerLeft,
+                child: const Text('Beacon Response: '),
+              ),
               SizedBox(
                 width: double.infinity,
                 child: Text(
