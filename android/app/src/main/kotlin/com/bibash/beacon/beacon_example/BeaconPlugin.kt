@@ -57,6 +57,9 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
                 val pairingRequest: String = call.argument("pairingRequest") ?: ""
                 pair(pairingRequest, result)
             }
+            "removePeers" -> {
+                removePeers(result)
+            }
             else -> {
                 result.notImplemented()
             }
@@ -105,6 +108,10 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
         Log.i(tag, request.toString())
 
         CoroutineScope(Dispatchers.IO).launch {
+
+            val peers = beaconClient.getPeers()
+            if (peers.isEmpty()) return@launch
+
             val response = when (request) {
                 /* Tezos */
 
@@ -143,6 +150,15 @@ class BeaconPlugin : MethodChannel.MethodCallHandler {
             beaconClient?.pair(pairingRequest)
             val peers = beaconClient?.getPeers()
             val isError = if (peers?.isNotEmpty() == true) 0 else 1
+            result.success(mapOf("error" to isError))
+        }
+    }
+
+    private fun removePeers(result: Result) {
+        CoroutineScope(Dispatchers.IO).launch {
+            beaconClient?.removeAllPeers()
+            val peers = beaconClient?.getPeers()
+            val isError = if (peers?.isNotEmpty() == true) 1 else 0
             result.success(mapOf("error" to isError))
         }
     }

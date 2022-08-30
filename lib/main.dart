@@ -36,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final TextEditingController pairingRequestController = TextEditingController(
       text:
-          "GUsRsanpcKz42MYDnuo63Lw8HD8bXoFZphzoY7iqZGqYuHwxQGBf7YbqmBg8dDgakbnjRsGnNgb6dM94Ax7uxm4o7f9YiQ8gYRH4N8EEQZCLowjbJTCk81fwvftZtk9nZPS6RvqSVZY1rdFNVkHmeLq6gnozkjhDdVrzEkTs6PFr4ZGQR4rryHHnm2RwbuCbERPARnPwqdAfxQaTHs4ivFHnBLPE8hejC4yVNDYCSM3z98wSjxznQzrT1WGt5Pr2WmJ6mzVLM2agF8GADEiPHjhnmSnGwo4whzAFtE8ZFoGwk1HwqUswWxQnE3Q6WVAndiusD1d7uSQe");
+          "GUsRsanpcL2Se3yYrWmrimk36PYiJLmk4rz8GR9oxSqTyMstRbRtvsYt1XiumG5EC51ov7mKLNJqcXaiT4UWyHmagy3iQhT4UV4e6QPrUVRk8ZyAHs6C7nwpyLAZB2hoQLB5JrtTwQFV3cpqp4b3StqRLitmMDQrKoBmL7CTGKRrWTn7Ew9FZmYA4wdTVDirQ4EqNuQSTPag1TTeStReke9dTSM42mzGdqZJTRCrfEHSnjhH3fK7Z4Brt52DFbEFNB95hGSMjY37n5aqqtzTzbqZcJCKMw8rDVVtbb8CArXk9bWMJWFE6F5smGVU9g8cgRMwmv4NDGvF");
 
   String value = "Beacon Response: ";
 
@@ -61,27 +61,58 @@ class _MyHomePageState extends State<MyHomePage> {
                 controller: pairingRequestController,
                 maxLines: 10,
               ),
-              ElevatedButton(
-                child: const Text('Pair'),
-                onPressed: () async {
-                  final Map response = await _methodChannel.invokeMethod('pair',
-                      {"pairingRequest": pairingRequestController.text});
-                  if (json.decode(response['error'].toString()) == 0) {
-                    // ignore: use_build_context_synchronously
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Successfully Paired'),
-                    ));
-                  }
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    child: const Text('Unpair'),
+                    onPressed: () async {
+                      final Map response =
+                          await _methodChannel.invokeMethod('removePeers');
+                      if (json.decode(response['error'].toString()) == 0) {
+                        // ignore: use_build_context_synchronously
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text('Successfully disconnected.'),
+                        ));
+                      }
+                    },
+                  ),
+                  ElevatedButton(
+                    child: const Text('Pair'),
+                    onPressed: () async {
+                      final Map response = await _methodChannel.invokeMethod(
+                          'pair',
+                          {"pairingRequest": pairingRequestController.text});
+                      if (json.decode(response['error'].toString()) == 0) {
+                        // ignore: use_build_context_synchronously
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                          content: Text('Successfully paired.'),
+                        ));
+                      }
+                    },
+                  ),
+                ],
               ),
-              ElevatedButton(
-                child: const Text('Respond'),
-                onPressed: () async {
-                  await _methodChannel.invokeMethod('respondExample');
-                },
+              Container(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  child: const Text('Respond'),
+                  onPressed: () async {
+                    await _methodChannel.invokeMethod('respondExample');
+                  },
+                ),
               ),
+              const Divider(),
               const SizedBox(height: 10),
-              Text(value)
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  value,
+                  textAlign: TextAlign.left,
+                ),
+              )
             ],
           ),
         ),
