@@ -43,7 +43,6 @@ class BeaconConnectService{
                                     switch result2 {
                                     case let .success(peers):
                                         print("Peers fetched")
-                                        print(peers)
                                         
                                         if(peers.count > 0){
                                           promise(.success(()))
@@ -91,7 +90,7 @@ class BeaconConnectService{
     private func onBeaconRequest(result: Result<BeaconRequest<Tezos>, Beacon.Error>) {
         switch result {
         case let .success(request):
-            print("Sending response")
+            print("Sending response from wallet")
             self.awaitingRequest = request
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
@@ -148,7 +147,7 @@ class BeaconConnectService{
                 beaconClient?.respond(with: try response(from: request)) { result in
                     switch result {
                     case .success(_):
-                        print("Sent the response")
+                        print("Sent the response from dApp")
                         completion(.success(()))
                     case let .failure(error):
                         print("Failed to send the response, got error: \(error)")
