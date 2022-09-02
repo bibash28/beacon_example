@@ -37,7 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final TextEditingController pairingRequestController = TextEditingController(
       text:
-          "GUsRsanpcLZGE9oNTJyV6WKhvE9itMUi9uStuXnXWPMhKsPynPLX79xqNNqwXiipaiJUsJwY9xE5zzZzycWA2XZfE6STW6LMpr72HCrJvFJZ6DPNxhhpd4WXtdNDLbF6tDsXfBcYn66wpkQ6fN1rHSXqfpPGSD8CfE4fuGxEAB3kw8GazUjwX2Eg6taGrFJqqEmragutBGoZ3Qgw7FahbuUGPMNDDS86iGWXvFkUDxKgKkP8KahwBaUBUd61gjUMMWP2p5PCZpudWm8dEz2MnTPszMcrzbZu7ZmBRic5J5TJCkmjvpEb2YJC1JMs39nrk5RbpuhRvZdr");
+          "GUsRsanpcKw4ACJdHiXCZ5NKwEHXefDrDffTFLnYB7k1mDpFFtYaraQx5jUhcHMozjfDSSwvKcbnpmRCq54G1vai2KwNJEqUpz3FYRerUAZ7nJtDN3aGp3Wo5eyhFQSxFmPqoUVa6bwQxZRoYJJcM8kjsM8vRTtSJg1jdpFEUWQCAbNhi9oZg3uyL412PPmmD5JSDUgtv1WJNLqAv7dcQ6fKM9GGpkspPzSWBYD8GRQSFZUHUf6BU1Me9BhtHUXv6HUMy7i1tyva5Rs4AwwiPC5xRw4YEEPGGkpKjgoU8r2SRYgZi6HsF5Wm7zUhhrzCdx66UJa8fHtC");
 
   bool hasPeers = false;
 
@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _eventChannel.receiveBroadcastStream().listen(
       (data) {
         setState(() {
-          value = data;
+          value = data.toString();
         });
       },
     );
@@ -100,8 +100,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                 .invokeMethod('removePeers');
 
                             setState(() {
-                              hasPeers =
+                              bool success =
                                   json.decode(response['success'].toString());
+                              hasPeers = !success;
                             });
 
                             if (!hasPeers) {
@@ -124,8 +125,9 @@ class _MyHomePageState extends State<MyHomePage> {
                             });
 
                             setState(() {
-                              hasPeers =
+                              bool success =
                                   json.decode(response['success'].toString());
+                              hasPeers = success;
                             });
 
                             if (hasPeers) {
@@ -133,6 +135,12 @@ class _MyHomePageState extends State<MyHomePage> {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
                                 content: Text('Successfully paired.'),
+                              ));
+                            } else {
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text('Failed to pair.'),
                               ));
                             }
                           },
